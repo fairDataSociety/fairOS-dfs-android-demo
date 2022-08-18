@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">FairOS</string>
+    <string name="bee"></string>
+    <string name="batch"></string>
+    <string name="network"></string>
+    <string name="rpc"></string>
+</resources>
