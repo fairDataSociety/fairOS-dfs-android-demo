@@ -1,39 +1,15 @@
 package org.fairdatasociety.fairos;
 
-import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
-import android.util.Log;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.loader.content.CursorLoader;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.snackbar.Snackbar;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
 
 import fairos.Fairos;
 import rx.Observable;
@@ -46,7 +22,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.d("MainActivity", "****************************MainActivity");
         super.onCreate(savedInstanceState);
         // check if credentials are saved in sharedPreferences
         SharedPreferences sharedPreferences = getSharedPreferences("FairOS", MODE_PRIVATE);
@@ -67,7 +42,7 @@ public class MainActivity extends AppCompatActivity {
                 if (!Fairos.isConnected()) {
                     Utils.init(dataDir, self);
                 }
-                if (!Fairos.isUserLoggedIn(username)) {
+                if (!Fairos.isUserLoggedIn()) {
                     Fairos.loginUser(username, password);
                 }
                 emitter.onNext("User logged in");

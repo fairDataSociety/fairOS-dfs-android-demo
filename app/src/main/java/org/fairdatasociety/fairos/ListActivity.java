@@ -42,7 +42,7 @@ import rx.schedulers.Schedulers;
 public class ListActivity extends AppCompatActivity implements ListAdaptor.ItemClickListener {
     private int EXTERNAL_STORAGE_PERMISSION_CODE = 23;
 
-    static final String POD = "demo_pod";
+    static final String POD = "consents";
     String PATH = "/";
 
     ListAdaptor adapter;
@@ -134,6 +134,7 @@ public class ListActivity extends AppCompatActivity implements ListAdaptor.ItemC
             String action = intent.getAction();
             String type = intent.getType();
             if (Intent.ACTION_SEND.equals(action) && type != null) {
+                CircularProgressIndicator progress = findViewById(R.id.progress);
                 if (type.equalsIgnoreCase("text/plain")) {
 
                 } else {
@@ -169,6 +170,7 @@ public class ListActivity extends AppCompatActivity implements ListAdaptor.ItemC
                                 } catch (Exception e) {
                                     emitter.onError(e);
                                 }
+                                progress.hide();
                                 emitter.onCompleted();
                             })
                             .subscribeOn(Schedulers.io())
@@ -212,10 +214,11 @@ public class ListActivity extends AppCompatActivity implements ListAdaptor.ItemC
                                 public void onError(Throwable e) {
                                     Snackbar.make(findViewById(android.R.id.content), "ls failed: " + e.getMessage(), Snackbar.LENGTH_SHORT)
                                             .show();
+                                    progress.hide();
                                 }
 
                                 @Override
-                                public void onCompleted() { }
+                                public void onCompleted() { progress.hide(); }
                             });
                         } catch (FileNotFoundException e) {
                             // TODO Auto-generated catch block
@@ -226,6 +229,7 @@ public class ListActivity extends AppCompatActivity implements ListAdaptor.ItemC
                         }
                     }
                 }
+                progress.show();
             }
         }
     }

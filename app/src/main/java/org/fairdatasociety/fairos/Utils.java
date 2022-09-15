@@ -12,7 +12,7 @@ public class Utils {
                 context.getResources().getString(R.string.batch),
                 context.getResources().getString(R.string.network),
                 context.getResources().getString(R.string.rpc),
-                false,
+                true,
                 5
         );
     }
