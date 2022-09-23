@@ -10,6 +10,7 @@ import android.Manifest;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -54,6 +55,21 @@ public class ListActivity extends AppCompatActivity implements ListAdaptor.ItemC
         Context self = this;
         Observable.create((Observable.OnSubscribe<JSONObject>) emitter -> {
             try {
+                if (!Fairos.isConnected()) {
+                    Utils.init("", self);
+                }
+                SharedPreferences sharedPreferences = getSharedPreferences("FairOS", MODE_PRIVATE);
+                String username = sharedPreferences.getString("username", "");
+                String password = sharedPreferences.getString("password", "");
+                assert username != null;
+                assert password != null;
+                if (username.equals("") || password.equals("")) {
+                    startActivity(new Intent(getApplicationContext(), LoginActivity.class));
+                    return;
+                }
+                if (!Fairos.isUserLoggedIn()) {
+                    Fairos.loginUser(username, password);
+                }
                 Fairos.podOpen(POD);
             } catch (Exception e) {
                 if (!e.getMessage().equals("pod already open")) {
@@ -125,8 +141,6 @@ public class ListActivity extends AppCompatActivity implements ListAdaptor.ItemC
 
     @Override
     protected void onNewIntent(Intent intent) {
-        Log.d("onNewIntent POD", POD);
-        Log.d("onNewIntent path", PATH);
         super.onNewIntent(intent);
         if (intent!= null) {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE},
@@ -160,6 +174,7 @@ public class ListActivity extends AppCompatActivity implements ListAdaptor.ItemC
                                 try {
                                     Fairos.blobUpload(bytes, POD, file.getName(), PATH, "", file.length(), 2048000);
                                 } catch (Exception e) {
+
                                     emitter.onError(e);
                                 }
                                 try {
