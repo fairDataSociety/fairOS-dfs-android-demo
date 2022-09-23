@@ -44,10 +44,9 @@ public class LoginActivity extends AppCompatActivity {
                 progress.show();
 
                 Observable.create((Observable.OnSubscribe<String>) emitter -> {
-                    String dataDir = getApplicationContext().getFilesDir() + "/fairos";
                     try {
                         if (!Fairos.isConnected()) {
-                            Utils.init(dataDir, self);
+                            Utils.init("", self);
                         }
                         Fairos.loginUser(username, password);
                     } catch (Exception e) {
