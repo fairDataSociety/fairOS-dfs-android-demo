@@ -51,6 +51,8 @@ public class ListActivity extends AppCompatActivity implements ListAdaptor.ItemC
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_list);
+        ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                EXTERNAL_STORAGE_PERMISSION_CODE);
         CircularProgressIndicator progress = findViewById(R.id.progress);
         Context self = this;
         Observable.create((Observable.OnSubscribe<JSONObject>) emitter -> {
@@ -127,6 +129,7 @@ public class ListActivity extends AppCompatActivity implements ListAdaptor.ItemC
 
             @Override
             public void onError(Throwable e) {
+                e.printStackTrace();
                 Snackbar.make(findViewById(android.R.id.content), "ls failed: " + e.getMessage(), Snackbar.LENGTH_SHORT)
                         .show();
                 progress.hide();
@@ -135,6 +138,8 @@ public class ListActivity extends AppCompatActivity implements ListAdaptor.ItemC
             @Override
             public void onCompleted() {
                 progress.hide();
+                Intent intent = getIntent();
+                handleIntent(intent);
             }
         });
     }
@@ -142,27 +147,29 @@ public class ListActivity extends AppCompatActivity implements ListAdaptor.ItemC
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
+        this.handleIntent(intent);
+    }
+
+
+    void handleIntent(Intent intent) {
         if (intent!= null) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    EXTERNAL_STORAGE_PERMISSION_CODE);
             String action = intent.getAction();
             String type = intent.getType();
             if (Intent.ACTION_SEND.equals(action) && type != null) {
                 CircularProgressIndicator progress = findViewById(R.id.progress);
                 if (type.equalsIgnoreCase("text/plain")) {
-
+                    // TODO do something
                 } else {
-                    Uri selectedImageUri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
-                    if (selectedImageUri != null) {
+                    Uri selectedUri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+                    if (selectedUri != null) {
 
                         String[] projection = {MediaStore.MediaColumns.DATA};
-                        CursorLoader cursorLoader = new CursorLoader(this, selectedImageUri, projection, null, null, null);
+                        CursorLoader cursorLoader = new CursorLoader(this, selectedUri, projection, null, null, null);
                         Cursor cursor = cursorLoader.loadInBackground();
                         int column_index = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
                         cursor.moveToFirst();
                         File file = new File(cursor.getString(column_index));
                         int size = (int) file.length();
-
                         byte[] bytes = new byte[size];
                         try {
                             BufferedInputStream buf = new BufferedInputStream(new FileInputStream(file));
@@ -172,11 +179,11 @@ public class ListActivity extends AppCompatActivity implements ListAdaptor.ItemC
                             Context self = this;
                             Observable.create((Observable.OnSubscribe<JSONObject>) emitter -> {
                                 try {
-                                    Fairos.blobUpload(bytes, POD, file.getName(), PATH, "", file.length(), 2048000);
+                                    Fairos.blobUpload(bytes, POD, file.getName(), PATH, "", file.length(), 2048000, true);
                                 } catch (Exception e) {
-
                                     emitter.onError(e);
                                 }
+
                                 try {
                                     String list = Fairos.dirList(POD, PATH);
                                     JSONObject data = new JSONObject(list);
@@ -227,6 +234,7 @@ public class ListActivity extends AppCompatActivity implements ListAdaptor.ItemC
 
                                 @Override
                                 public void onError(Throwable e) {
+                                    e.printStackTrace();
                                     Snackbar.make(findViewById(android.R.id.content), "ls failed: " + e.getMessage(), Snackbar.LENGTH_SHORT)
                                             .show();
                                     progress.hide();
@@ -248,7 +256,6 @@ public class ListActivity extends AppCompatActivity implements ListAdaptor.ItemC
             }
         }
     }
-
 
     @Override
     public void onItemClick(View view, int position) {
