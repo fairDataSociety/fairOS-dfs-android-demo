@@ -15,14 +15,13 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.FairOS">
         <activity
-            android:name=".LoginActivity"
-            android:exported="false" />
-        <activity
-            android:name=".ListActivity"
-            android:launchMode="singleTask"
-            android:exported="true">
-        <intent-filter android:label="Share with fairOS">
+            android:name=".UploadActivity"
+            android:exported="true"
+            android:launchMode="singleTask">
+
+            <intent-filter android:label="Share with fairOS">
                 <action android:name="android.intent.action.SEND" />
+
                 <category android:name="android.intent.category.DEFAULT" />
 
                 <data android:mimeType="application/*" />
@@ -35,8 +34,15 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".LoginActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ListActivity"
+            android:exported="false" />
+        <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

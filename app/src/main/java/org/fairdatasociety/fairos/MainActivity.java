@@ -1,15 +1,13 @@
 package org.fairdatasociety.fairos;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
-
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.snackbar.Snackbar;
-
 
 import fairos.Fairos;
 import rx.Observable;
@@ -18,7 +16,7 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
 public class MainActivity extends AppCompatActivity {
-    PodsAdaptor adapter;
+    ProgressDialog progressBar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,7 +32,12 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
         setContentView(R.layout.activity_main);
-        CircularProgressIndicator progress = findViewById(R.id.progress);
+
+        progressBar = new ProgressDialog(this);
+        progressBar.setIndeterminate(true);
+        progressBar.setMessage("Logging in...");
+        progressBar.show();
+
         String dataDir = getApplicationContext().getFilesDir() + "/fairos";
         Context self = this;
         Observable.create((Observable.OnSubscribe<String>) emitter -> {
@@ -46,7 +49,6 @@ public class MainActivity extends AppCompatActivity {
                     Fairos.loginUser(username, password);
                 }
                 emitter.onNext("User logged in");
-                emitter.onCompleted();
             } catch (Exception e) {
                 emitter.onError(e);
             }
@@ -56,22 +58,21 @@ public class MainActivity extends AppCompatActivity {
         .observeOn(AndroidSchedulers.mainThread())
         .subscribe(new Observer() {
             @Override
-            public void onNext(Object o) {
-                Intent i = new Intent(getApplicationContext(), ListActivity.class);
-                startActivity(i);
-            }
+            public void onNext(Object o) { }
 
             @Override
             public void onError(Throwable e) {
                 Snackbar.make(findViewById(android.R.id.content), "init failed: " + e.getMessage(), Snackbar.LENGTH_SHORT)
                         .setAnchorView(findViewById(R.id.message))
                         .show();
-                progress.hide();
+                progressBar.hide();
             }
 
             @Override
             public void onCompleted() {
-                progress.hide();
+                progressBar.hide();
+                Intent i = new Intent(getApplicationContext(), ListActivity.class);
+                startActivity(i);
             }
         });
     }
