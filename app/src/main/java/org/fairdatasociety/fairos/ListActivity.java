@@ -50,7 +50,7 @@ public class ListActivity extends AppCompatActivity implements ListAdaptor.ItemC
         Observable.create((Observable.OnSubscribe<JSONObject>) emitter -> {
             try {
                 if (!Fairos.isConnected()) {
-                    Utils.init("", self);
+                    Utils.init(self);
                 }
                 SharedPreferences sharedPreferences = getSharedPreferences("FairOS", MODE_PRIVATE);
                 String username = sharedPreferences.getString("username", "");
@@ -64,21 +64,21 @@ public class ListActivity extends AppCompatActivity implements ListAdaptor.ItemC
                 if (!Fairos.isUserLoggedIn()) {
                     Fairos.loginUser(username, password);
                 }
-                Fairos.podOpen(POD);
-            } catch (Exception e) {
-                if (!e.getMessage().equals("pod already open")) {
-                    emitter.onError(e);
+                if (Fairos.isPodPresent(POD)) {
+                    Fairos.podOpen(POD);
+                } else {
+                    Fairos.newPod(POD);
                 }
-            }
 
-            try {
                 String list = Fairos.dirList(POD, PATH);
                 JSONObject data = new JSONObject(list);
 
                 emitter.onNext(data);
                 emitter.onCompleted();
             } catch (Exception e) {
-                emitter.onError(e);
+                if (!e.getMessage().equals("pod already open")) {
+                    emitter.onError(e);
+                }
             }
             emitter.onCompleted();
         })

@@ -91,18 +91,18 @@ public class UploadActivity extends AppCompatActivity {
                 Observable.create((Observable.OnSubscribe<String>) emitter -> {
                     try {
                         if (!Fairos.isConnected()) {
-                            Utils.init("", self);
+                            Utils.init(self);
                         }
                         if (!Fairos.isUserLoggedIn()) {
                             Fairos.loginUser(username, password);
                         }
                         Fairos.podOpen(POD);
+                        emitter.onNext("");
                     } catch (Exception e) {
                         if (!e.getMessage().equals("pod already open")) {
                             emitter.onError(e);
                         }
                     }
-                    emitter.onNext("");
                     emitter.onCompleted();
                 })
                 .subscribeOn(Schedulers.io())
@@ -134,16 +134,12 @@ public class UploadActivity extends AppCompatActivity {
     }
 
     void upload() {
-        Log.d( "filename", filename+"===");
-        Log.d( "path", PATH+"===");
-
         Observable.create((Observable.OnSubscribe<JSONObject>) emitter -> {
             try {
-                Fairos.blobUpload(dataBytes, POD, filename, PATH, "", size, 2048000, true);
+                Fairos.blobUpload(dataBytes, POD, filename, PATH, "", size, 8192000, true);
             } catch (Exception e) {
                 emitter.onError(e);
             }
-
             emitter.onCompleted();
         })
         .subscribeOn(Schedulers.io())
