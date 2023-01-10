@@ -134,12 +134,9 @@ public class UploadActivity extends AppCompatActivity {
     }
 
     void upload() {
-        Log.d( "filename", filename+"===");
-        Log.d( "path", PATH+"===");
-
         Observable.create((Observable.OnSubscribe<JSONObject>) emitter -> {
             try {
-                Fairos.blobUpload(dataBytes, POD, filename, PATH, "", size, 2048000, true);
+                Fairos.blobUpload(dataBytes, POD, filename, PATH, "", size, 8192000, true);
             } catch (Exception e) {
                 emitter.onError(e);
             }

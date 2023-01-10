@@ -64,7 +64,12 @@ public class ListActivity extends AppCompatActivity implements ListAdaptor.ItemC
                 if (!Fairos.isUserLoggedIn()) {
                     Fairos.loginUser(username, password);
                 }
-                Fairos.podOpen(POD);
+                if (Fairos.isPodPresent(POD)) {
+                    Fairos.podOpen(POD);
+                } else {
+                    Fairos.newPod(POD);
+                }
+
                 String list = Fairos.dirList(POD, PATH);
                 JSONObject data = new JSONObject(list);
 
