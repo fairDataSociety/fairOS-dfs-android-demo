@@ -38,12 +38,11 @@ public class MainActivity extends AppCompatActivity {
         progressBar.setMessage("Logging in...");
         progressBar.show();
 
-        String dataDir = getApplicationContext().getFilesDir() + "/fairos";
         Context self = this;
         Observable.create((Observable.OnSubscribe<String>) emitter -> {
             try {
                 if (!Fairos.isConnected()) {
-                    Utils.init(dataDir, self);
+                    Utils.init(self);
                 }
                 if (!Fairos.isUserLoggedIn()) {
                     Fairos.loginUser(username, password);

@@ -47,18 +47,18 @@ public class LoginActivity extends AppCompatActivity {
                 Observable.create((Observable.OnSubscribe<String>) emitter -> {
                     try {
                         if (!Fairos.isConnected()) {
-                            Utils.init("", self);
+                            Utils.init(self);
                         }
                         Fairos.loginUser(username, password);
+                        SharedPreferences.Editor fairosEditor = sharedPreferences.edit();
+                        fairosEditor.putString("username", username);
+                        fairosEditor.putString("password", password);
+                        fairosEditor.apply();
+                        emitter.onNext("login successful");
+                        emitter.onCompleted();
                     } catch (Exception e) {
                         emitter.onError(e);
                     }
-                    emitter.onNext("login successful");
-                    SharedPreferences.Editor fairosEditor = sharedPreferences.edit();
-                    fairosEditor.putString("username", username);
-                    fairosEditor.putString("password", password);
-                    fairosEditor.apply();
-                    emitter.onCompleted();
                 })
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
