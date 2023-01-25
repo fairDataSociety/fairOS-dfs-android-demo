@@ -34,6 +34,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 progressBar = new ProgressDialog(v.getContext());
+                progressBar.setCancelable(false);
                 progressBar.setIndeterminate(true);
                 progressBar.setMessage("Logging in...");
                 progressBar.show();

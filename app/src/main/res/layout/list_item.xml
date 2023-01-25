@@ -5,13 +5,23 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
-    <TextView
-        android:id="@+id/filename"
+    <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="55dp"
         android:layout_margin="10dp"
-        android:textColor="@color/purple_200"
-        android:textSize="18sp"
-        android:textStyle="bold"
-        tools:text="Item" />
+        android:elevation="4dp"
+        android:padding="10dp">
+
+        <TextView
+            android:id="@+id/filename"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:textColor="@color/purple_200"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            tools:text="Item" />
+
+    </androidx.cardview.widget.CardView>
+
 </LinearLayout>

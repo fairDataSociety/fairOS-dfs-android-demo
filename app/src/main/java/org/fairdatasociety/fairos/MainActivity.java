@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         progressBar = new ProgressDialog(this);
+        progressBar.setCancelable(false);
         progressBar.setIndeterminate(true);
         progressBar.setMessage("Logging in...");
         progressBar.show();
@@ -72,6 +73,7 @@ public class MainActivity extends AppCompatActivity {
                 progressBar.hide();
                 Intent i = new Intent(getApplicationContext(), ListActivity.class);
                 startActivity(i);
+                finish();
             }
         });
     }
