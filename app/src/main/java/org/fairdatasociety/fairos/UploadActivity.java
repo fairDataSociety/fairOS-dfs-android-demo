@@ -294,10 +294,12 @@ public class UploadActivity extends AppCompatActivity {
                                     public void onCompleted() { }
                                 });
                             }
+                        } else {
+                            Intent i = new Intent(getApplicationContext(), ListActivity.class);
+                            i.putExtra("error", "wrong url");
+                            startActivity(i);
+                            finish();
                         }
-
-
-
                         break;
                     default:
                         Log.d("handleIntent", "default");
