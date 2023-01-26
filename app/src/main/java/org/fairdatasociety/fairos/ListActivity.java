@@ -2,6 +2,7 @@ package org.fairdatasociety.fairos;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import android.Manifest;
@@ -9,16 +10,23 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 
+import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.snackbar.Snackbar;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import fairos.Fairos;
 import rx.Observable;
@@ -43,6 +51,7 @@ public class ListActivity extends AppCompatActivity implements ListAdaptor.ItemC
         Context self = this;
 
         progressBar = new ProgressDialog(self);
+        progressBar.setCancelable(false);
         progressBar.setIndeterminate(true);
         progressBar.setMessage("Loading content...");
         progressBar.show();
@@ -129,6 +138,11 @@ public class ListActivity extends AppCompatActivity implements ListAdaptor.ItemC
 
             @Override
             public void onCompleted() {
+                String error = getIntent().getStringExtra("error");
+                if (error != null && !error.equals("")) {
+                    Snackbar.make(findViewById(android.R.id.content), "download failed: " + error, Snackbar.LENGTH_SHORT)
+                            .show();
+                }
                 progressBar.hide();
             }
         });
@@ -136,6 +150,54 @@ public class ListActivity extends AppCompatActivity implements ListAdaptor.ItemC
 
     @Override
     public void onItemClick(View view, int position) {
+        Item item = adapter.getItem(position);
+        if (item.type.equals("file")) {
+            Context self = this;
+            progressBar = new ProgressDialog(self);
+            progressBar.setCancelable(false);
+            progressBar.setIndeterminate(true);
+            progressBar.setMessage("Loading content...");
+            progressBar.show();
+            Observable.create((Observable.OnSubscribe<JSONObject>) emitter -> {
+                try {
+                    byte[] fileBytes = Fairos.fileDownload(POD, "/"+item.name);
+                    String jsonString = new String(fileBytes, StandardCharsets.UTF_8);
+                    JSONObject jsonObject = new JSONObject(jsonString);
+                    emitter.onNext(jsonObject);
+                    emitter.onCompleted();
+                } catch (Exception e) {
+                    emitter.onError(e);
+                }
+                emitter.onCompleted();
+            })
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(new Observer() {
+                @Override
+                public void onNext(Object o) {
+                    JSONObject consent = (JSONObject) o;
+                    Intent myIntent = new Intent(getApplicationContext(), JSONActivity.class);
+                    try {
+                        myIntent.putExtra("data", consent.toString(4));
+                        myIntent.putExtra("name", item.name);
+                        startActivity(myIntent);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                    progressBar.hide();
+                }
+
+                @Override
+                public void onError(Throwable e) {
+                    Snackbar.make(findViewById(android.R.id.content), "download failed: " + e.getMessage(), Snackbar.LENGTH_SHORT)
+                            .show();
+                    progressBar.hide();
+                }
+
+                @Override
+                public void onCompleted() { }
+            });
+        }
 //        Item item = adapter.getItem(position);
 //        CircularProgressIndicator progress = findViewById(R.id.progress);
 //        progress.show();

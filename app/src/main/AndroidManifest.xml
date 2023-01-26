@@ -15,10 +15,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.FairOS">
         <activity
+            android:name=".JSONActivity"
+            android:exported="false">
+            <meta-data
+                android:name="android.app.lib_name"
+                android:value="" />
+        </activity>
+        <activity
             android:name=".UploadActivity"
             android:exported="true"
             android:launchMode="singleTask">
-
             <intent-filter android:label="Share with fairOS">
                 <action android:name="android.intent.action.SEND" />
 
@@ -32,6 +38,16 @@
                 <data android:mimeType="text/*" />
                 <data android:mimeType="video/*" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="fairdrive.org"
+                    android:scheme="fairdrive" />
+            </intent-filter>
         </activity>
         <activity
             android:name=".LoginActivity"
@@ -41,8 +57,7 @@
             android:exported="false" />
         <activity
             android:name=".MainActivity"
-            android:exported="true"
-            >
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

@@ -11,6 +11,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -18,6 +19,7 @@ import android.widget.EditText;
 
 import com.google.android.material.snackbar.Snackbar;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
@@ -25,6 +27,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 import fairos.Fairos;
 import rx.Observable;
@@ -61,7 +65,11 @@ public class UploadActivity extends AppCompatActivity {
         setContentView(R.layout.activity_upload);
         fileInput = findViewById(R.id.filename);
         intent = getIntent();
-        handleIntent();
+        try {
+            handleIntent();
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
         Button clickButton = findViewById(R.id.upload_button);
         Button cancelButton = findViewById(R.id.cancel_button);
@@ -85,6 +93,7 @@ public class UploadActivity extends AppCompatActivity {
                     return;
                 }
                 progressBar = new ProgressDialog(v.getContext());
+                progressBar.setCancelable(false);
                 progressBar.setIndeterminate(true);
                 progressBar.setMessage("Uploading content...");
                 progressBar.show();
@@ -161,48 +170,140 @@ public class UploadActivity extends AppCompatActivity {
                 progressBar.hide();
                 Intent i = new Intent(getApplicationContext(), ListActivity.class);
                 startActivity(i);
+                finish();
             }
         });
     }
 
-    void handleIntent() {
+    void handleIntent() throws JSONException {
         if (intent != null) {
             String action = intent.getAction();
             String type = intent.getType();
-            if (Intent.ACTION_SEND.equals(action) && type != null) {
-                size = 0;
-                dataBytes = new byte[0];
-                if (type.equalsIgnoreCase("text/plain")) {
-                    Log.d("text/plain", intent.getStringExtra(Intent.EXTRA_TEXT));
-                    String data = intent.getStringExtra(Intent.EXTRA_TEXT);
-                    dataBytes = data.getBytes();
-                    size = dataBytes.length;
-                } else {
-                    Uri selectedUri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
-                    if (selectedUri != null) {
-                        String[] projection = {MediaStore.MediaColumns.DATA};
-                        CursorLoader cursorLoader = new CursorLoader(this, selectedUri, projection, null, null, null);
-                        Cursor cursor = cursorLoader.loadInBackground();
-                        int column_index = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
-                        cursor.moveToFirst();
-                        File file = new File(cursor.getString(column_index));
-                        size = (int) file.length();
-                        dataBytes = new byte[size];
-                        filename = file.getName();
-                        try {
-                            BufferedInputStream buf = new BufferedInputStream(new FileInputStream(file));
-                            buf.read(dataBytes, 0, dataBytes.length);
-                            buf.close();
-                        } catch (FileNotFoundException e) {
-                            // TODO Auto-generated catch block
-                            e.printStackTrace();
-                        } catch (IOException e) {
-                            // TODO Auto-generated catch block
-                            e.printStackTrace();
+            if (action != null) {
+                switch (action) {
+                    case Intent.ACTION_SEND:
+                        if (type != null) {
+                            size = 0;
+                            dataBytes = new byte[0];
+                            if (type.equalsIgnoreCase("text/plain")) {
+                                Log.d("text/plain", intent.getStringExtra(Intent.EXTRA_TEXT));
+                                String data = intent.getStringExtra(Intent.EXTRA_TEXT);
+                                dataBytes = data.getBytes();
+                                size = dataBytes.length;
+                            } else {
+                                Uri selectedUri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+                                if (selectedUri != null) {
+                                    String[] projection = {MediaStore.MediaColumns.DATA};
+                                    CursorLoader cursorLoader = new CursorLoader(this, selectedUri, projection, null, null, null);
+                                    Cursor cursor = cursorLoader.loadInBackground();
+                                    assert cursor != null;
+                                    int column_index = cursor.getColumnIndexOrThrow(MediaStore.MediaColumns.DATA);
+                                    cursor.moveToFirst();
+                                    File file = new File(cursor.getString(column_index));
+                                    size = (int) file.length();
+                                    dataBytes = new byte[size];
+                                    filename = file.getName();
+                                    try {
+                                        BufferedInputStream buf = new BufferedInputStream(new FileInputStream(file));
+                                        buf.read(dataBytes, 0, dataBytes.length);
+                                        buf.close();
+                                    } catch (IOException e) {
+                                        // TODO Auto-generated catch block
+                                        e.printStackTrace();
+                                    }
+                                }
+                            }
+                            fileInput.setText(filename);
                         }
-                    }
+                        break;
+                    case Intent.ACTION_VIEW:
+                        Uri data = getIntent().getData();
+
+                        assert data != null;
+                        String path = data.getPath();
+                        assert path != null;
+                        String[] parts = path.split("/");
+                        if(parts.length >= 3) {
+                            String filename = parts[2];
+                            fileInput.setText(filename);
+
+                            String host = data.getHost();
+                            String scheme = data.getScheme();
+
+                            String queryParameter = data.getQueryParameter("data");
+                            if (queryParameter != null && !Objects.equals(queryParameter, "")) {
+                                dataBytes = Base64.decode(queryParameter, Base64.DEFAULT);
+                                size = dataBytes.length;
+                            } else {
+                                Context self = this;
+                                progressBar = new ProgressDialog(self);
+                                progressBar.setIndeterminate(true);
+                                progressBar.setMessage("Loading content...");
+                                progressBar.show();
+                                progressBar.setCancelable(false);
+
+                                Observable.create((Observable.OnSubscribe<JSONObject>) emitter -> {
+                                    try {
+                                        if (!Fairos.isConnected()) {
+                                            Utils.init(self);
+                                        }
+                                        if (!Fairos.isUserLoggedIn()) {
+                                            Fairos.loginUser(username, password);
+                                        }
+                                        Fairos.podOpen(POD);
+                                        byte[] fileBytes = Fairos.fileDownload(POD, "/"+filename);
+                                        String jsonString = new String(fileBytes, StandardCharsets.UTF_8);
+                                        JSONObject jsonObject = new JSONObject(jsonString);
+                                        emitter.onNext(jsonObject);
+                                        emitter.onCompleted();
+                                    } catch (Exception e) {
+                                        emitter.onError(e);
+                                    }
+                                    emitter.onCompleted();
+                                })
+                                .subscribeOn(Schedulers.io())
+                                .observeOn(AndroidSchedulers.mainThread())
+                                .subscribe(new Observer() {
+                                    @Override
+                                    public void onNext(Object o) {
+                                        JSONObject consent = (JSONObject) o;
+                                        Intent myIntent = new Intent(getApplicationContext(), JSONActivity.class);
+                                        try {
+                                            myIntent.putExtra("data", consent.toString(4));
+                                            myIntent.putExtra("name", filename);
+                                            startActivity(myIntent);
+                                            finish();
+                                        } catch (JSONException e) {
+                                            e.printStackTrace();
+                                        }
+                                        progressBar.hide();
+                                    }
+
+                                    @Override
+                                    public void onError(Throwable e) {
+                                        Snackbar.make(findViewById(android.R.id.content), "download failed: " + e.getMessage(), Snackbar.LENGTH_SHORT)
+                                                .show();
+                                        Intent i = new Intent(getApplicationContext(), ListActivity.class);
+                                        i.putExtra("error", e.getMessage());
+                                        startActivity(i);
+                                        finish();
+                                        progressBar.hide();
+                                    }
+
+                                    @Override
+                                    public void onCompleted() { }
+                                });
+                            }
+                        } else {
+                            Intent i = new Intent(getApplicationContext(), ListActivity.class);
+                            i.putExtra("error", "wrong url");
+                            startActivity(i);
+                            finish();
+                        }
+                        break;
+                    default:
+                        Log.d("handleIntent", "default");
                 }
-                fileInput.setText(filename);
             }
         }
     }

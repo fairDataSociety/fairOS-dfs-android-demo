@@ -17,6 +17,7 @@ public class ListAdaptor extends RecyclerView.Adapter<ListAdaptor.ViewHolder>{
     private List<Item> mData = new ArrayList<Item>();
     private LayoutInflater mInflater;
     private ListAdaptor.ItemClickListener mClickListener;
+    int charactersToDisplay = 10;
 
     // data is passed into the constructor
     ListAdaptor(Context context, List<String> dirs, List<String> files) {
@@ -46,7 +47,15 @@ public class ListAdaptor extends RecyclerView.Adapter<ListAdaptor.ViewHolder>{
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         String file = mData.get(position).name;
-        holder.myTextView.setText(file);
+        int length = file.length();
+        if (length > charactersToDisplay * 2) {
+            int start = charactersToDisplay;
+            int end = length - charactersToDisplay;
+            String truncatedFilename = file.substring(0, start) + "...." + file.substring(end, length);
+            holder.myTextView.setText(truncatedFilename);
+        } else {
+            holder.myTextView.setText(file);
+        }
     }
 
     @Override
