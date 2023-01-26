@@ -303,7 +303,6 @@ public class UploadActivity extends AppCompatActivity {
                         break;
                     default:
                         Log.d("handleIntent", "default");
-                        // code to be executed if value is not "hi","hello" or "bonjour"
                 }
             }
         }
