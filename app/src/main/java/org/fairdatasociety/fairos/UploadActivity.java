@@ -25,7 +25,6 @@ import org.json.JSONObject;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
@@ -222,18 +221,19 @@ public class UploadActivity extends AppCompatActivity {
                         assert data != null;
                         String path = data.getPath();
                         assert path != null;
-                        String[] parts = path.split("/");
-                        if(parts.length >= 3) {
-                            String filename = parts[2];
-                            fileInput.setText(filename);
 
-                            String host = data.getHost();
-                            String scheme = data.getScheme();
+                        String filename = data.getQueryParameter("file");
+                        if(filename != null && !Objects.equals(filename, "")) {
+                            fileInput.setText(filename);
 
                             String queryParameter = data.getQueryParameter("data");
                             if (queryParameter != null && !Objects.equals(queryParameter, "")) {
-                                dataBytes = Base64.decode(queryParameter, Base64.DEFAULT);
-                                size = dataBytes.length;
+                                try {
+                                    dataBytes = Base64.decode(queryParameter, Base64.DEFAULT);
+                                    size = dataBytes.length;
+                                } catch(IllegalArgumentException e) {
+                                    e.printStackTrace();
+                                }
                             } else {
                                 Context self = this;
                                 progressBar = new ProgressDialog(self);
@@ -251,6 +251,8 @@ public class UploadActivity extends AppCompatActivity {
                                             Fairos.loginUser(username, password);
                                         }
                                         Fairos.podOpen(POD);
+                                        Log.d("=========POD", POD);
+                                        Log.d("=========filename", filename);
                                         byte[] fileBytes = Fairos.fileDownload(POD, "/"+filename);
                                         String jsonString = new String(fileBytes, StandardCharsets.UTF_8);
                                         JSONObject jsonObject = new JSONObject(jsonString);
