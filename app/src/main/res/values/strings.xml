@@ -3,5 +3,5 @@
     <string name="bee">https://bee-1.fairdatasociety.org</string>
     <string name="batch"></string>
     <string name="network">testnet</string>
-    <string name="rpc">https://xdai.dev.fairdatasociety.org</string>
+    <string name="rpc">https://rpc.sepolia.org</string>
 </resources>
